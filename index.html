@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muzic - Material Design 3 Music Player</title>
+  <meta name="description" content="Next-generation Material Design 3 Spotify-like music client in your browser with animated squiggly progress bars, equalizer, synced lyrics, and audio visualizers.">
+  <!-- Material Symbols Outlined & Rounded -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF2E93'><path d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/></svg>">
+</head>
+<body class="md3-theme-dark">
+  <div id="app" class="app-container">
+    <!-- Ambient Background Lighting Glow -->
+    <div id="ambient-glow" class="ambient-glow"></div>
+
+    <!-- MAIN APP LAYOUT -->
+    <div class="layout-body">
+      <!-- SIDE NAVIGATION DRAWER / RAIL -->
+      <aside class="md3-navigation-drawer" id="nav-drawer">
+        <div class="nav-header">
+          <div class="brand-logo">
+            <div class="brand-icon">
+              <span class="material-symbols-rounded">graphic_eq</span>
+            </div>
+            <span class="brand-name">Muzic<span class="brand-dot">.</span></span>
+          </div>
+          <button class="icon-btn mobile-only" id="btn-close-nav" title="Close Menu">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <nav class="nav-menu">
+          <div class="nav-section-title">MENU</div>
+          <button class="nav-item active" data-view="home" id="nav-home">
+            <span class="material-symbols-rounded nav-icon">home</span>
+            <span class="nav-label">Home</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+          <button class="nav-item" data-view="explore" id="nav-explore">
+            <span class="material-symbols-rounded nav-icon">explore</span>
+            <span class="nav-label">Search & Explore</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+          <button class="nav-item" data-view="library" id="nav-library">
+            <span class="material-symbols-rounded nav-icon">local_library</span>
+            <span class="nav-label">Your Library</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+          <button class="nav-item" data-view="lyrics" id="nav-lyrics-view">
+            <span class="material-symbols-rounded nav-icon">lyrics</span>
+            <span class="nav-label">Synced Lyrics</span>
+            <span class="md3-badge">LIVE</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+
+          <div class="nav-divider"></div>
+          <div class="nav-section-title">COLLECTIONS</div>
+          <button class="nav-item" data-view="liked" id="nav-liked">
+            <span class="material-symbols-rounded nav-icon liked-icon">favorite</span>
+            <span class="nav-label">Liked Songs</span>
+            <span class="nav-badge" id="liked-count-badge">0</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+          <button class="nav-item" data-view="local" id="nav-local">
+            <span class="material-symbols-rounded nav-icon">folder_special</span>
+            <span class="nav-label">Local Tracks</span>
+            <div class="nav-active-indicator"></div>
+          </button>
+
+          <div class="nav-divider"></div>
+          <div class="nav-section-header">
+            <span class="nav-section-title">PLAYLISTS</span>
+            <button class="icon-btn-small" id="btn-add-playlist" title="Create Playlist">
+              <span class="material-symbols-rounded">add</span>
+            </button>
+          </div>
+          <div class="playlist-nav-list" id="playlist-nav-list">
+            <!-- Dynamically populated playlists -->
+          </div>
+        </nav>
+
+        <div class="nav-footer">
+          <button class="md3-button md3-button-tonal w-full" id="btn-upload-file">
+            <span class="material-symbols-rounded">upload_file</span>
+            <span>Import Music</span>
+          </button>
+          <input type="file" id="audio-file-input" accept="audio/*" multiple style="display: none;">
+        </div>
+      </aside>
+
+      <!-- MAIN CONTENT WRAPPER -->
+      <main class="main-content" id="main-content">
+        <!-- TOP APP BAR -->
+        <header class="md3-top-app-bar">
+          <div class="app-bar-left">
+            <button class="icon-btn mobile-only" id="btn-open-nav" title="Open Menu">
+              <span class="material-symbols-rounded">menu</span>
+            </button>
+            <div class="navigation-history-buttons">
+              <button class="icon-btn-round" id="btn-nav-back" title="Back" disabled>
+                <span class="material-symbols-rounded">arrow_back</span>
+              </button>
+              <button class="icon-btn-round" id="btn-nav-forward" title="Forward" disabled>
+                <span class="material-symbols-rounded">arrow_forward</span>
+              </button>
+            </div>
+            <!-- Global Search Box -->
+            <div class="md3-search-bar" id="global-search-container">
+              <span class="material-symbols-rounded search-icon">search</span>
+              <input type="text" id="global-search-input" placeholder="Search songs, artists, albums, or genres..." autocomplete="off">
+              <button class="clear-search-btn" id="btn-clear-search" style="display: none;">
+                <span class="material-symbols-rounded">close</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="app-bar-right">
+            <button class="md3-chip md3-chip-tonal" id="btn-equalizer-modal" title="Open Equalizer & Sound FX">
+              <span class="material-symbols-rounded">tune</span>
+              <span class="chip-label">Equalizer</span>
+            </button>
+            <button class="icon-btn" id="btn-shortcuts-modal" title="Keyboard Shortcuts (?)">
+              <span class="material-symbols-rounded">keyboard</span>
+            </button>
+            <button class="icon-btn" id="btn-theme-toggle" title="Ambient Lighting Toggle">
+              <span class="material-symbols-rounded">fluorescent</span>
+            </button>
+            <div class="user-profile-badge" title="Muzic MD3 Profile">
+              <div class="avatar-circle">M</div>
+            </div>
+          </div>
+        </header>
+
+        <!-- VIEW CONTAINER -->
+        <div class="view-viewport" id="view-viewport">
+          
+          <!-- 1. HOME VIEW -->
+          <section class="view-panel active" id="view-home">
+            <!-- Hero Banner Greeting -->
+            <div class="hero-greeting-banner">
+              <div class="greeting-content">
+                <span class="md3-overline" id="time-greeting-label">GOOD EVENING</span>
+                <h1 class="hero-headline">Welcome to <span class="gradient-text">Muzic MD3</span></h1>
+                <p class="hero-subtitle">Material You powered music streaming with real-time waveform dynamics.</p>
+                <div class="hero-actions">
+                  <button class="md3-button md3-button-filled" id="btn-hero-play-featured">
+                    <span class="material-symbols-rounded">play_arrow</span>
+                    <span>Listen Now</span>
+                  </button>
+                  <button class="md3-button md3-button-outlined" id="btn-hero-explore">
+                    <span class="material-symbols-rounded">explore</span>
+                    <span>Browse Genres</span>
+                  </button>
+                </div>
+              </div>
+              <div class="hero-floating-art">
+                <div class="hero-art-card glass-card">
+                  <div class="mini-art-disc" id="hero-art-disc">
+                    <span class="material-symbols-rounded">music_note</span>
+                  </div>
+                  <div class="hero-art-details">
+                    <span class="hero-art-title">Cosmic Waves</span>
+                    <span class="hero-art-artist">Synthwave FM</span>
+                  </div>
+                  <div class="live-visualizer-dots">
+                    <div class="dot d1"></div><div class="dot d2"></div><div class="dot d3"></div><div class="dot d4"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Access 6-Grid (Spotify Style) -->
+            <div class="section-container">
+              <h2 class="section-title">Jump Back In</h2>
+              <div class="quick-access-grid" id="quick-access-grid">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="chips-row">
+              <button class="md3-filter-chip active" data-filter="all">All</button>
+              <button class="md3-filter-chip" data-filter="synthwave">Synthwave</button>
+              <button class="md3-filter-chip" data-filter="lofi">Chillhop & Lo-Fi</button>
+              <button class="md3-filter-chip" data-filter="electronic">Cyber Electro</button>
+              <button class="md3-filter-chip" data-filter="ambient">Ambient Space</button>
+              <button class="md3-filter-chip" data-filter="future">Future Bass</button>
+            </div>
+
+            <!-- Featured Releases Carousel / Cards -->
+            <div class="section-container">
+              <div class="section-header-flex">
+                <h2 class="section-title">Trending Tracks & Mixes</h2>
+                <button class="link-btn" id="btn-see-all-tracks">See all</button>
+              </div>
+              <div class="cards-grid" id="featured-tracks-grid">
+                <!-- Track Cards -->
+              </div>
+            </div>
+
+            <!-- Featured Albums -->
+            <div class="section-container">
+              <div class="section-header-flex">
+                <h2 class="section-title">Featured Albums</h2>
+              </div>
+              <div class="cards-grid" id="featured-albums-grid">
+                <!-- Album Cards -->
+              </div>
+            </div>
+
+            <!-- Curated Playlists Section -->
+            <div class="section-container">
+              <div class="section-header-flex">
+                <h2 class="section-title">Made For You</h2>
+              </div>
+              <div class="cards-grid" id="curated-playlists-grid">
+                <!-- Playlist Cards -->
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. SEARCH / EXPLORE VIEW -->
+          <section class="view-panel" id="view-explore">
+            <div class="search-view-header">
+              <h1 class="view-title">Search & Explore</h1>
+              <p class="view-desc">Browse through genres, mood mixes, and search live catalog.</p>
+            </div>
+
+            <div class="search-results-container" id="search-results-section" style="display: none;">
+              <h2 class="section-title" id="search-query-heading">Results</h2>
+              <div class="search-tabs">
+                <button class="md3-filter-chip active" data-search-tab="all">Top Results</button>
+                <button class="md3-filter-chip" data-search-tab="songs">Songs</button>
+                <button class="md3-filter-chip" data-search-tab="artists">Artists</button>
+                <button class="md3-filter-chip" data-search-tab="albums">Albums</button>
+              </div>
+              <div class="search-results-list" id="search-results-list">
+                <!-- Live results -->
+              </div>
+            </div>
+
+            <div class="browse-categories-section" id="browse-categories-section">
+              <h2 class="section-title">Browse All Genres</h2>
+              <div class="genre-cards-grid" id="genre-cards-grid">
+                <!-- Vivid Genre Cards -->
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. LIBRARY VIEW -->
+          <section class="view-panel" id="view-library">
+            <div class="library-header-row">
+              <div>
+                <h1 class="view-title">Your Library</h1>
+                <p class="view-desc">Your playlists, saved tracks, and imported local audio files.</p>
+              </div>
+              <div class="library-actions">
+                <button class="md3-button md3-button-filled" id="btn-library-new-playlist">
+                  <span class="material-symbols-rounded">add</span>
+                  <span>New Playlist</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="library-tabs">
+              <button class="md3-filter-chip active" data-lib-filter="all">All</button>
+              <button class="md3-filter-chip" data-lib-filter="playlists">Playlists</button>
+              <button class="md3-filter-chip" data-lib-filter="liked">Liked Songs</button>
+              <button class="md3-filter-chip" data-lib-filter="artists">Artists</button>
+              <button class="md3-filter-chip" data-lib-filter="local">Local Files</button>
+            </div>
+
+            <div class="library-grid" id="library-cards-grid">
+              <!-- Dynamically populated library items -->
+            </div>
+          </section>
+
+          <!-- 4. PLAYLIST / ALBUM DETAIL VIEW -->
+          <section class="view-panel" id="view-details">
+            <div class="playlist-banner" id="playlist-banner">
+              <div class="playlist-banner-art" id="details-art">
+                <span class="material-symbols-rounded banner-placeholder-icon">album</span>
+              </div>
+              <div class="playlist-banner-info">
+                <span class="md3-badge-pill" id="details-type">PLAYLIST</span>
+                <h1 class="playlist-banner-title" id="details-title">Cyberpunk Nights</h1>
+                <p class="playlist-banner-description" id="details-description">Neon drenched synthscapes, basslines, and retro vibes.</p>
+                <div class="playlist-banner-meta">
+                  <span class="meta-creator" id="details-creator">Muzic Curators</span>
+                  <span class="meta-dot">•</span>
+                  <span class="meta-count" id="details-count">12 songs</span>
+                  <span class="meta-dot">•</span>
+                  <span class="meta-duration" id="details-duration">38 min</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Details Action Bar -->
+            <div class="details-action-bar">
+              <button class="md3-fab-play" id="btn-details-play-all" title="Play All">
+                <span class="material-symbols-rounded">play_arrow</span>
+              </button>
+              <button class="icon-btn-large" id="btn-details-shuffle" title="Shuffle Play">
+                <span class="material-symbols-rounded">shuffle</span>
+              </button>
+              <button class="icon-btn-large" id="btn-details-heart" title="Save to Library">
+                <span class="material-symbols-rounded">favorite_border</span>
+              </button>
+              <button class="icon-btn-large" id="btn-details-more" title="More options">
+                <span class="material-symbols-rounded">more_horiz</span>
+              </button>
+            </div>
+
+            <!-- Tracklist Table -->
+            <div class="tracklist-container">
+              <div class="tracklist-header">
+                <div class="th-num">#</div>
+                <div class="th-title">TITLE</div>
+                <div class="th-album">ALBUM</div>
+                <div class="th-date">GENRE</div>
+                <div class="th-time">
+                  <span class="material-symbols-rounded">schedule</span>
+                </div>
+              </div>
+              <div class="tracklist-rows" id="details-tracklist-rows">
+                <!-- Track rows -->
+              </div>
+            </div>
+          </section>
+
+          <!-- 5. SYNCED LYRICS VIEW -->
+          <section class="view-panel" id="view-lyrics">
+            <div class="lyrics-view-container">
+              <div class="lyrics-header">
+                <div class="lyrics-track-info">
+                  <div class="lyrics-art-thumb" id="lyrics-art-thumb"></div>
+                  <div>
+                    <h2 class="lyrics-track-title" id="lyrics-track-title">No Track Playing</h2>
+                    <p class="lyrics-track-artist" id="lyrics-track-artist">Select a song to view lyrics</p>
+                  </div>
+                </div>
+                <div class="lyrics-controls">
+                  <button class="md3-chip md3-chip-tonal" id="btn-toggle-lyrics-size">
+                    <span class="material-symbols-rounded">format_size</span>
+                    <span>Text Size</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Synced Lyric Lines Scrollable Area -->
+              <div class="lyrics-scroll-container" id="lyrics-scroll-container">
+                <div class="lyrics-content" id="lyrics-content">
+                  <!-- Injected synchronized lines -->
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </main>
+
+      <!-- RIGHT CONTEXT / QUEUE & NOW PLAYING PANEL -->
+      <aside class="md3-right-panel" id="right-panel">
+        <div class="panel-header">
+          <div class="panel-tabs">
+            <button class="panel-tab-btn active" id="tab-now-playing">Now Playing</button>
+            <button class="panel-tab-btn" id="tab-queue">Queue (<span id="queue-count">0</span>)</button>
+          </div>
+          <button class="icon-btn-small" id="btn-close-right-panel" title="Close Panel">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Now Playing Details -->
+        <div class="panel-content active" id="panel-now-playing">
+          <div class="now-playing-large-art">
+            <div class="art-wrapper" id="side-art-wrapper">
+              <img src="" id="side-album-art" alt="Album Cover" style="display:none;">
+              <div class="art-fallback-icon" id="side-art-fallback">
+                <span class="material-symbols-rounded">music_note</span>
+              </div>
+              <div class="canvas-visualizer-overlay">
+                <canvas id="side-panel-visualizer-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="now-playing-meta">
+            <div class="meta-text">
+              <h3 class="np-title" id="side-np-title">No song playing</h3>
+              <p class="np-artist" id="side-np-artist">Play a track to get started</p>
+            </div>
+            <button class="icon-btn" id="side-np-heart" title="Like">
+              <span class="material-symbols-rounded">favorite_border</span>
+            </button>
+          </div>
+
+          <!-- Mini Audio Spectrum Visualizer Card -->
+          <div class="audio-spectrum-card">
+            <div class="spectrum-card-header">
+              <span class="md3-overline">REALTIME SPECTRUM</span>
+              <span class="spectrum-hz" id="spectrum-hz-label">Web Audio Engine</span>
+            </div>
+            <canvas id="spectrum-canvas" width="300" height="60"></canvas>
+          </div>
+
+          <!-- About Artist Card -->
+          <div class="artist-about-card" id="artist-about-card">
+            <h4 class="card-title">About the Artist</h4>
+            <p class="artist-bio-text" id="side-artist-bio">Muzic MD3 offers high-fidelity browser audio powered by Material You aesthetics and dynamic sound processing.</p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Playback Queue -->
+        <div class="panel-content" id="panel-queue">
+          <div class="queue-section">
+            <div class="queue-section-header">
+              <span class="queue-label">NOW PLAYING</span>
+            </div>
+            <div class="queue-current-item" id="queue-current-item">
+              <!-- Current track -->
+            </div>
+          </div>
+          <div class="queue-section">
+            <div class="queue-section-header">
+              <span class="queue-label">NEXT IN QUEUE</span>
+              <button class="link-btn-small" id="btn-clear-queue">Clear</button>
+            </div>
+            <div class="queue-list" id="queue-items-list">
+              <!-- Queue items -->
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- PERSISTENT BOTTOM PLAYER BAR (WITH SIGNATURE MD3 SQUIGGLY PROGRESS BAR) -->
+    <footer class="md3-bottom-player" id="bottom-player">
+      <!-- Left: Track Metadata & Heart -->
+      <div class="player-left">
+        <div class="player-art-thumb" id="player-art-thumb">
+          <img src="" id="player-thumb-img" alt="Track thumbnail" style="display:none;">
+          <span class="material-symbols-rounded default-art-icon" id="player-thumb-placeholder">music_note</span>
+          <div class="playing-indicator-overlay" id="player-thumb-pulse"></div>
+        </div>
+        <div class="player-track-info">
+          <div class="player-title-marquee">
+            <span class="player-title" id="player-title">Select a track</span>
+          </div>
+          <span class="player-artist" id="player-artist">Muzic Browser Player</span>
+        </div>
+        <button class="icon-btn player-heart-btn" id="btn-player-heart" title="Save to Liked Songs">
+          <span class="material-symbols-rounded">favorite_border</span>
+        </button>
+        <button class="icon-btn player-pip-btn" id="btn-player-pip" title="Expanded Visualizer Mode">
+          <span class="material-symbols-rounded">picture_in_picture_alt</span>
+        </button>
+      </div>
+
+      <!-- Center: Transport Controls & Signature MD3 Squiggly Wave Progress Bar -->
+      <div class="player-center">
+        <div class="player-transport-controls">
+          <button class="icon-btn transport-btn" id="btn-shuffle" title="Shuffle (S)">
+            <span class="material-symbols-rounded">shuffle</span>
+          </button>
+          <button class="icon-btn transport-btn" id="btn-prev" title="Previous (Left Arrow)">
+            <span class="material-symbols-rounded">skip_previous</span>
+          </button>
+          <button class="md3-fab-player" id="btn-play-pause" title="Play/Pause (Space)">
+            <span class="material-symbols-rounded" id="play-pause-icon">play_arrow</span>
+          </button>
+          <button class="icon-btn transport-btn" id="btn-next" title="Next (Right Arrow)">
+            <span class="material-symbols-rounded">skip_next</span>
+          </button>
+          <button class="icon-btn transport-btn" id="btn-repeat" title="Repeat (R)">
+            <span class="material-symbols-rounded">repeat</span>
+          </button>
+        </div>
+
+        <!-- SIGNATURE ANDROID 13/14 SQUIGGLY PROGRESS BAR -->
+        <div class="player-progress-container" id="progress-container">
+          <span class="time-label current-time" id="time-current">0:00</span>
+          
+          <div class="squiggly-slider-wrapper" id="squiggly-slider-wrapper">
+            <!-- Dynamic interactive canvas rendering the live sine wave & scrubber thumb -->
+            <canvas id="squiggly-progress-canvas" height="32"></canvas>
+            <div class="scrub-tooltip" id="scrub-tooltip">0:00</div>
+          </div>
+
+          <span class="time-label total-time" id="time-total">0:00</span>
+        </div>
+      </div>
+
+      <!-- Right: Utility Controls & Volume -->
+      <div class="player-right">
+        <button class="icon-btn" id="btn-toggle-lyrics" title="Lyrics (L)">
+          <span class="material-symbols-rounded">lyrics</span>
+        </button>
+        <button class="icon-btn" id="btn-toggle-queue" title="Queue">
+          <span class="material-symbols-rounded">queue_music</span>
+        </button>
+        <button class="icon-btn" id="btn-toggle-eq-quick" title="Equalizer">
+          <span class="material-symbols-rounded">equalizer</span>
+        </button>
+
+        <div class="volume-control-wrapper">
+          <button class="icon-btn" id="btn-volume-mute" title="Mute (M)">
+            <span class="material-symbols-rounded" id="volume-icon">volume_up</span>
+          </button>
+          <div class="volume-slider-track" id="volume-slider-track">
+            <div class="volume-slider-fill" id="volume-slider-fill"></div>
+            <div class="volume-slider-thumb" id="volume-slider-thumb"></div>
+          </div>
+        </div>
+
+        <button class="icon-btn" id="btn-fullscreen-toggle" title="Fullscreen (F)">
+          <span class="material-symbols-rounded">fullscreen</span>
+        </button>
+      </div>
+    </footer>
+
+    <!-- MODAL / DIALOG: 5-BAND EQUALIZER & AUDIO FX -->
+    <div class="md3-dialog-backdrop" id="equalizer-modal" style="display: none;">
+      <div class="md3-dialog-surface">
+        <div class="dialog-header">
+          <div class="dialog-title-flex">
+            <span class="material-symbols-rounded pink-icon">tune</span>
+            <h2 class="dialog-title">Audio Equalizer & Sound FX</h2>
+          </div>
+          <button class="icon-btn-small" id="btn-close-eq-modal">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <!-- Preset Selector Chips -->
+          <div class="eq-presets-row">
+            <span class="preset-label">Preset:</span>
+            <div class="chips-scroll">
+              <button class="md3-filter-chip active" data-preset="flat">Flat</button>
+              <button class="md3-filter-chip" data-preset="bass">Bass Boost</button>
+              <button class="md3-filter-chip" data-preset="electronic">Electronic</button>
+              <button class="md3-filter-chip" data-preset="vocal">Vocal Booster</button>
+              <button class="md3-filter-chip" data-preset="rock">Rock</button>
+              <button class="md3-filter-chip" data-preset="acoustic">Acoustic</button>
+            </div>
+          </div>
+
+          <!-- 5-Band Slider Sliders -->
+          <div class="eq-sliders-container">
+            <div class="eq-band-col">
+              <span class="band-gain-val" id="eq-gain-val-0">+0dB</span>
+              <input type="range" class="eq-vertical-range" id="eq-band-0" min="-12" max="12" step="0.5" value="0" orient="vertical">
+              <span class="band-hz-label">60Hz</span>
+              <span class="band-desc">Sub Bass</span>
+            </div>
+            <div class="eq-band-col">
+              <span class="band-gain-val" id="eq-gain-val-1">+0dB</span>
+              <input type="range" class="eq-vertical-range" id="eq-band-1" min="-12" max="12" step="0.5" value="0" orient="vertical">
+              <span class="band-hz-label">230Hz</span>
+              <span class="band-desc">Bass</span>
+            </div>
+            <div class="eq-band-col">
+              <span class="band-gain-val" id="eq-gain-val-2">+0dB</span>
+              <input type="range" class="eq-vertical-range" id="eq-band-2" min="-12" max="12" step="0.5" value="0" orient="vertical">
+              <span class="band-hz-label">910Hz</span>
+              <span class="band-desc">Mid</span>
+            </div>
+            <div class="eq-band-col">
+              <span class="band-gain-val" id="eq-gain-val-3">+0dB</span>
+              <input type="range" class="eq-vertical-range" id="eq-band-3" min="-12" max="12" step="0.5" value="0" orient="vertical">
+              <span class="band-hz-label">3.6kHz</span>
+              <span class="band-desc">Presence</span>
+            </div>
+            <div class="eq-band-col">
+              <span class="band-gain-val" id="eq-gain-val-4">+0dB</span>
+              <input type="range" class="eq-vertical-range" id="eq-band-4" min="-12" max="12" step="0.5" value="0" orient="vertical">
+              <span class="band-hz-label">14kHz</span>
+              <span class="band-desc">Treble</span>
+            </div>
+          </div>
+
+          <!-- Extra FX: Bass Boost Switch & Stereo Width -->
+          <div class="fx-switches-card">
+            <div class="fx-item">
+              <div class="fx-text">
+                <span class="fx-title">Bass Dynamic Boost</span>
+                <span class="fx-subtitle">Enriches low frequencies for deeper punch</span>
+              </div>
+              <label class="md3-switch">
+                <input type="checkbox" id="switch-bass-boost">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="fx-item">
+              <div class="fx-text">
+                <span class="fx-title">Dynamic Normalizer</span>
+                <span class="fx-subtitle">Balances track loudness levels smoothly</span>
+              </div>
+              <label class="md3-switch">
+                <input type="checkbox" id="switch-normalizer" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="md3-button md3-button-text" id="btn-reset-eq">Reset to Flat</button>
+          <button class="md3-button md3-button-filled" id="btn-apply-eq">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL / DIALOG: CREATE PLAYLIST -->
+    <div class="md3-dialog-backdrop" id="new-playlist-modal" style="display: none;">
+      <div class="md3-dialog-surface">
+        <div class="dialog-header">
+          <h2 class="dialog-title">Create New Playlist</h2>
+          <button class="icon-btn-small" id="btn-close-playlist-modal">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="md3-text-field">
+            <label for="input-playlist-name">Playlist Name</label>
+            <input type="text" id="input-playlist-name" placeholder="e.g. Late Night Synth Vibes" required>
+          </div>
+          <div class="md3-text-field mt-16">
+            <label for="input-playlist-desc">Description (Optional)</label>
+            <textarea id="input-playlist-desc" rows="3" placeholder="Add an optional description..."></textarea>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="md3-button md3-button-text" id="btn-cancel-playlist">Cancel</button>
+          <button class="md3-button md3-button-filled" id="btn-save-playlist">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: KEYBOARD SHORTCUTS -->
+    <div class="md3-dialog-backdrop" id="shortcuts-modal" style="display: none;">
+      <div class="md3-dialog-surface modal-medium">
+        <div class="dialog-header">
+          <div class="dialog-title-flex">
+            <span class="material-symbols-rounded pink-icon">keyboard</span>
+            <h2 class="dialog-title">Keyboard Shortcuts</h2>
+          </div>
+          <button class="icon-btn-small" id="btn-close-shortcuts-modal">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="dialog-body">
+          <div class="shortcuts-grid">
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Play / Pause</span>
+              <kbd class="shortcut-kbd">Space</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Seek Forward 5s</span>
+              <kbd class="shortcut-kbd">→</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Seek Backward 5s</span>
+              <kbd class="shortcut-kbd">←</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Volume Up</span>
+              <kbd class="shortcut-kbd">↑</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Volume Down</span>
+              <kbd class="shortcut-kbd">↓</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Mute / Unmute</span>
+              <kbd class="shortcut-kbd">M</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Toggle Lyrics</span>
+              <kbd class="shortcut-kbd">L</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Toggle Equalizer</span>
+              <kbd class="shortcut-kbd">E</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Toggle Fullscreen</span>
+              <kbd class="shortcut-kbd">F</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Shuffle Mode</span>
+              <kbd class="shortcut-kbd">S</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Repeat Mode</span>
+              <kbd class="shortcut-kbd">R</kbd>
+            </div>
+            <div class="shortcut-item">
+              <span class="shortcut-desc">Focus Search</span>
+              <kbd class="shortcut-kbd">/</kbd>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="md3-button md3-button-filled" id="btn-close-shortcuts-ok">Got it</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULLSCREEN IMMERSIVE NOW PLAYING OVERLAY -->
+    <div class="fullscreen-now-playing-overlay" id="fullscreen-overlay" style="display: none;">
+      <div class="fs-overlay-backdrop"></div>
+      <div class="fs-container">
+        <div class="fs-top-bar">
+          <div class="fs-brand">
+            <span class="material-symbols-rounded pink-icon">graphic_eq</span>
+            <span>Now Playing</span>
+          </div>
+          <button class="icon-btn-large" id="btn-exit-fullscreen" title="Exit Fullscreen (Esc)">
+            <span class="material-symbols-rounded">fullscreen_exit</span>
+          </button>
+        </div>
+
+        <div class="fs-content-split">
+          <!-- Left: Rotating Large Vinyl / Art with Glow -->
+          <div class="fs-art-col">
+            <div class="fs-vinyl-container" id="fs-vinyl-container">
+              <div class="fs-vinyl-disc" id="fs-vinyl-disc">
+                <div class="vinyl-grooves"></div>
+                <div class="vinyl-center-label" id="fs-vinyl-label">
+                  <span class="material-symbols-rounded">music_note</span>
+                </div>
+              </div>
+              <div class="fs-cover-art-card" id="fs-cover-card">
+                <img src="" id="fs-cover-img" alt="Cover" style="display:none;">
+                <span class="material-symbols-rounded fs-placeholder-icon" id="fs-cover-placeholder">album</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Metadata, Live Visualizer & Lyrics Snippet -->
+          <div class="fs-details-col">
+            <div class="fs-track-info">
+              <h1 class="fs-track-title" id="fs-track-title">Cyber City Lights</h1>
+              <h3 class="fs-track-artist" id="fs-track-artist">Neon Dreams • Synthwave</h3>
+            </div>
+
+            <!-- Fullscreen Audio Visualizer Canvas -->
+            <div class="fs-visualizer-box">
+              <canvas id="fs-visualizer-canvas" width="600" height="120"></canvas>
+            </div>
+
+            <!-- Fullscreen Synced Lyric Highlight Line -->
+            <div class="fs-lyrics-box">
+              <div class="fs-lyrics-prev" id="fs-lyrics-prev">...</div>
+              <div class="fs-lyrics-active" id="fs-lyrics-active">"Cruising under neon violet skies..."</div>
+              <div class="fs-lyrics-next" id="fs-lyrics-next">...</div>
+            </div>
+
+            <!-- Fullscreen Progress Bar (Squiggly) -->
+            <div class="fs-progress-wrapper">
+              <span class="time-label" id="fs-time-current">0:00</span>
+              <div class="fs-canvas-progress-container" id="fs-progress-container">
+                <canvas id="fs-squiggly-canvas" height="36"></canvas>
+              </div>
+              <span class="time-label" id="fs-time-total">0:00</span>
+            </div>
+
+            <!-- Fullscreen Controls -->
+            <div class="fs-controls-row">
+              <button class="icon-btn-large" id="fs-btn-shuffle"><span class="material-symbols-rounded">shuffle</span></button>
+              <button class="icon-btn-large" id="fs-btn-prev"><span class="material-symbols-rounded">skip_previous</span></button>
+              <button class="md3-fab-player fs-fab-play" id="fs-btn-play"><span class="material-symbols-rounded" id="fs-play-icon">play_arrow</span></button>
+              <button class="icon-btn-large" id="fs-btn-next"><span class="material-symbols-rounded">skip_next</span></button>
+              <button class="icon-btn-large" id="fs-btn-repeat"><span class="material-symbols-rounded">repeat</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST / SNACKBAR CONTAINER -->
+    <div class="md3-snackbar" id="app-snackbar">
+      <span class="snackbar-message" id="snackbar-message">Action confirmed</span>
+    </div>
+
+    <!-- HIDDEN HTML5 AUDIO ELEMENT -->
+    <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
